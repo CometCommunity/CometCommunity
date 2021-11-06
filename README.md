@@ -8,8 +8,9 @@ The objective is to expand the $COMET token as far and wide as possible, use it 
 **Treasury funds** could be used to pay for ads, burning, providing liquidity to Dexes. Whatever the community decides, there is only one requirement that should be always respected. **Every** amount spent on promoting/developing $COMET should also be used to **promote Ergo**,either directly or through the Ergo Foundation.
 
 In $COMET we take only two things seriously, having fun with memes and tokenomics.
+
   1.- **Memes**. Self-explanatory. 
-  2.- **Tokenomics**. There are a lot of crypto’s out there where the founders try fill their own bag with riches. To help undecided       investors we will be providing a shitcoin-meter comparing $COMET to some of the top 15 by marketcap coins.
+  2.- **Tokenomics**. There are a lot of crypto’s out there where the founders try fill their own bag with riches. To help undecided investors we will be providing a shitcoin-meter comparing $COMET to some of the top 15 by marketcap coins.
   
 This totally **arbitrary** measure and **not** peer reviewed at all metrics is defined as the amount of the supply for insiders and foundation over the total supply
 
