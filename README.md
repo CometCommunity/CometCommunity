@@ -10,6 +10,7 @@ The objective is to expand the $COMET token as far and wide as possible, use it 
 In $COMET we take only two things seriously, having fun with memes and tokenomics.
 
   1.- **Memes**. Self-explanatory. 
+  
   2.- **Tokenomics**. There are a lot of crypto’s out there where the founders try fill their own bag with riches. To help undecided investors we will be providing a shitcoin-meter comparing $COMET to some of the top 15 by marketcap coins.
   
 This totally **arbitrary** measure and **not** peer reviewed at all metrics is defined as the amount of the supply for insiders and foundation over the total supply
