@@ -15,7 +15,7 @@ def delete_image():
 
 def post():
     reddit.validate_on_submit = True
-    subreddit = reddit.subreddit("trying_out_a_bot_lol")
+    subreddit = reddit.subreddit("CometSeals")
     subreddit.submit_image(title, image_path)
     delete_image()
 
@@ -51,8 +51,8 @@ reddit = praw.Reddit(
 PATH_OF_GIT_REPO = r'.'  # make sure .git folder is properly configured
 COMMIT_MESSAGE = 'comment from python script'
 
-meme_number = 2
-images_path = r"images"
+meme_number = 1
+images_path = r"memes"
 
 for z in range(2):
     title = "Daily bot-uploaded random meme number {}/3".format(meme_number)
