@@ -51,16 +51,17 @@ reddit = praw.Reddit(
 PATH_OF_GIT_REPO = r'.'  # make sure .git folder is properly configured
 COMMIT_MESSAGE = 'comment from python script'
 
-meme_number = 1
 images_path = r"memes"
-
-for z in range(2):
-    title = "Daily bot-uploaded random meme number {}/3".format(meme_number)
-    random_filename = random.choice([
-        x for x in os.listdir(images_path)
-        if os.path.isfile(os.path.join(images_path, x))
-    ])
-    image_path = images_path + "/" + random_filename
-    post()
-    meme_number += 1
-git_push()
+while len(os.listdir(images_path)) != 0:
+    meme_number = 1
+    for z in range(3):
+        title = "Daily bot-uploaded random meme number {}/3".format(meme_number)
+        random_filename = random.choice([
+            x for x in os.listdir(images_path)
+            if os.path.isfile(os.path.join(images_path, x))
+        ])
+        image_path = images_path + "/" + random_filename
+        post()
+        meme_number += 1
+    git_push()
+    time.sleep(86400)
