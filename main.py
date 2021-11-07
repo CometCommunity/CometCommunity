@@ -15,7 +15,7 @@ def delete_image():
 
 def post():
     reddit.validate_on_submit = True
-    subreddit = reddit.subreddit("CometSeals")
+    subreddit = reddit.subreddit("trying_out_a_bot_lol")
     subreddit.submit_image(title, image_path)
     delete_image()
 
@@ -31,13 +31,13 @@ def git_push():
         print('Some error occured while pushing the code')
 
 
-with open("pw.txt", "r") as f:
+with open("../pw.txt", "r") as f:
     pw = f.read()
 
-with open("client.txt", "r") as f:
+with open("../client.txt", "r") as f:
     CLIENT_ID = f.read()
 
-with open("secret.txt", "r") as f:
+with open("../secret.txt", "r") as f:
     SECRET_KEY = f.read()
 
 reddit = praw.Reddit(
