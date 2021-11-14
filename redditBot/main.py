@@ -17,27 +17,28 @@ def post():
     reddit.validate_on_submit = True
     subreddit = reddit.subreddit("CometSeals")
     subreddit.submit_image(title, image_path)
+
     delete_image()
 
 
 def git_push():
-    try:
-        repo = Repo(PATH_OF_GIT_REPO)
-        repo.git.add(update=True)
-        repo.index.commit(COMMIT_MESSAGE)
-        origin = repo.remote(name='origin')
-        origin.push()
-    except:
-        print('Some error occured while pushing the code')
+     try:
+         repo = Repo(PATH_OF_GIT_REPO)
+         repo.git.add(update=True)
+         repo.index.commit(COMMIT_MESSAGE)
+         origin = repo.remote(name='origin')
+         origin.push()
+     except:
+         print('Some error occured while pushing the code')
 
 
-with open("../pw.txt", "r") as f:
+with open("./pw.txt", "r") as f:
     pw = f.read()
 
-with open("../client.txt", "r") as f:
+with open("./client.txt", "r") as f:
     CLIENT_ID = f.read()
 
-with open("../secret.txt", "r") as f:
+with open("./secret.txt", "r") as f:
     SECRET_KEY = f.read()
 
 reddit = praw.Reddit(
@@ -55,13 +56,14 @@ images_path = r"memes"
 while len(os.listdir(images_path)) != 0:
     meme_number = 1
     for z in range(3):
-        title = "Daily bot-uploaded random meme number {}/3".format(meme_number)
         random_filename = random.choice([
             x for x in os.listdir(images_path)
             if os.path.isfile(os.path.join(images_path, x))
         ])
+        unformatted_title = "Daily bot-uploaded random meme number {}/3 [" + random_filename.partition("@")[0] + "]"
+        title = unformatted_title.format(meme_number)
         image_path = images_path + "/" + random_filename
         post()
         meme_number += 1
+    time.sleep(80000)
     git_push()
-    time.sleep(86400)
