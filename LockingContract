@@ -1,0 +1,184 @@
+//this code is based on Luivatra’s code for a self replicating contract
+// https://github.com/ergoplatform/ergoscript-by-example/blob/main/selfReplicatingTokenSale.md
+//remember kids, it is not plagiarism if you provide the source
+
+//you can run it here
+//https://scastie.scala-lang.org/gxV66kGwSb6CqEmHLqZxnQ
+import org.ergoplatform.compiler.ErgoScalaCompiler._
+import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
+import org.ergoplatform.playground._
+import org.ergoplatform.ErgoBox
+import org.ergoplatform.settings.ErgoAlgos
+
+///////////////////////////////////////////////////////////////////////////////////
+// Prepare A Test Scenario //
+///////////////////////////////////////////////////////////////////////////////////
+// Create a simulated blockchain (aka "Mockchain")
+val blockchainSim = newBlockChainSimulationScenario("Token Lock Scenario")
+// Defining the amount of nanoergs in an erg, making working with amounts easier
+val nanoergsInErg = 1000000000L
+// Create a new token called  TOKEN
+val token = blockchainSim.newToken("TOKEN")
+
+// We keep track of the remaining amount of TOKEN
+val tokenTotal = 21000000000L
+
+// Define the token founders
+val founder1 = blockchainSim.newParty("Alice")
+
+//we define the emission schedule
+
+//for testing purposes we will be unlocking at each block, we can modify the emission schedule afterwards
+
+//considering 840000000 tokens in 4 years, and that each block takes 2 mins
+// We do the math outside but it is
+//1 hour = 30 blocks
+//1 day = 24 hours
+//1 year = 365.25 days 
+// locking period = 4 years
+
+// then the emission schedule is 840000000/(30*24*365.25*4) and is a number close to 798 tokens per block
+// the tokens unlocked each month are 840000000/(365.25*4*12) = 47912
+
+//we set a starting height for the unlocking
+
+val unlockStart = 0
+
+//we set the minimum withdawal tokens
+
+val minTokens = 47912
+
+//this function was shamelessly stolen from https://github.com/ergoplatform/ergoscript-by-example/blob/main/headsOrTails.md
+
+def addToHeight( a:Int ) : Int = {
+    // Simulate the time advance by increasing the HEIGHT, each unit is ~2min
+    val new_height = blockchainSim.getHeight+a
+    blockchainSim.setHeight(new_height)
+    println("New height: " + new_height)
+    return new_height
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// Locking Contract                                                                //
+///////////////////////////////////////////////////////////////////////////////////
+
+// This script ensures that the founders can only withdraw the unlocked tokens according to the emission schedule
+// the rest of the tokens get locked again
+// whatToken: Makes sure the token is TOKEN
+// founderOutput: Makes sure the tokens are going to the founder and not a super hacker
+// tokenQuantity: it checks that the tokens being withdrawn are less than the locked one
+// tokenCooldown: It checks that the tokens are not withdrawn more than once a month
+// tokenCooldown is a hack, in reality isn't checking for time between withdrawals, it is checking for a minimum amount of withdrawal
+// since the unlocking emission is linear we set the minimum as the amount of tokens unlocked in a month
+// selfOutput: it checks that the box contains the same locking contract and that the amount of tokens not withdrawn kept locked
+//This is the contract, the rest is just for testing
+//We only need two outputs, first for taking withdrawing the tokens, the second one to keep the locked tokens
+val lockScript = s"""
+  {
+      val defined = OUTPUTS.size >= 2
+      sigmaProp (if (defined) {
+      val whatToken_0 = OUTPUTS(0).tokens(0)._1 == token
+      val whatToken_1 = OUTPUTS(1).tokens(0)._1 == token
+      val height = CONTEXT.HEIGHT
+      val founderOutput = OUTPUTS(0).propositionBytes == founder.propBytes
+      val tokenQuantity =  minTokens <= OUTPUTS(0).tokens(0)._2 && OUTPUTS(0).tokens(0)._2 < (height - unlockStart) * emissionSchedule
+      val selfOutput = (OUTPUTS(1).propositionBytes == SELF.propositionBytes && OUTPUTS(1).tokens(0)._2 == (SELF.tokens(0)._2 - OUTPUTS(0).tokens(0)._2)) || SELF.tokens(0)._2 <= 2
+     
+     // they are one on each line so I can "debug" it
+      whatToken_0 &&
+      whatToken_1 &&
+      tokenQuantity &&
+      selfOutput &&
+      founderOutput
+
+    } else { false } )
+  }
+""".stripMargin
+
+
+// Compile the contract with an included `Map` which specifies what the values of given parameters are going to be hard-coded into the contract
+val lockContract = ErgoScriptCompiler.compile(Map ("founder" -> founder1.wallet.getAddress.pubKey, 
+                                                  "token" -> token.tokenId,
+                                                  "unlockStart" -> 0,
+                                                  "minTokens" -> 47912,
+                                                  "emissionSchedule" -> 798L), lockScript)
+                                                  
+
+///////////////////////////////////////////////////////////////////////////////////
+// Wallet initializations                                                        //
+///////////////////////////////////////////////////////////////////////////////////
+val startingFunds = 1 * nanoergsInErg
+founder1.generateUnspentBoxes(toSpend = startingFunds, tokensToSpend = List(token-> tokenTotal))
+founder1.printUnspentAssets()
+println("-----------")
+
+// The initial box for the deposit of the token
+val initialBox      = Box(value = MinTxFee,
+                          token = (token -> 2100000L),
+                          script = lockContract) 
+val initialTransaction = Transaction(
+      inputs       = founder1.selectUnspentBoxes(toSpend = startingFunds),
+      outputs      = List(initialBox),
+      fee          = MinTxFee,
+      sendChangeTo =founder1.wallet.getAddress
+  )
+  
+  // Sign the initialTransaction
+var initialTransactionSigned = founder1.wallet.sign(initialTransaction)
+var lockBox = initialTransactionSigned.outputs(0)
+
+blockchainSim.send(initialTransactionSigned)
+founder1.printUnspentAssets()
+println("-----------")
+  
+// The Ergo Playground does not handle tokens correctly yet, so to make sure noone gets cheated we keep track of it here
+// obviously this is not needed on the real blockchain
+var tokenAmounts = scala.collection.mutable.Map(founder1 -> 0L)
+
+// Function that withdraw tokens from the lockBox 
+def getTokens(founder: Party, lockBox: ErgoBox, ruggedTokens:Long) : ErgoBox = {
+  // Find the remaining amount of token in the lockBox
+  val tokenRemaining = lockBox.additionalTokens.find(t => ErgoAlgos.encode(t._1)==ErgoAlgos.encode(token.tokenId)).get._2
+  
+  // The founder gets his tokens
+  val tokenBox     = Box(value = MinTxFee,
+                         token = (token -> ruggedTokens),
+                         script = contract(founder.wallet.getAddress.pubKey))
+  
+    // This will be the new sale box, also protected by the sale contract
+  val newLockBox    = Box(value = MinTxFee,
+                         token = (token -> (tokenRemaining-ruggedTokens)),
+                         script = lockContract)
+  
+  // Token administration, only needed in the playground
+  tokenAmounts(founder) = tokenAmounts(founder)+ruggedTokens
+  
+  // The token withdrawal, remember the output boxes need to be in the right order
+  val founderTransaction = Transaction(
+        inputs       = founder.selectUnspentBoxes(toSpend = (2 * MinTxFee)) ++ List(lockBox),
+        outputs      = List(tokenBox, newLockBox),
+        fee          = MinTxFee,
+        sendChangeTo = founder.wallet.getAddress
+      )
+
+  val signedTransaction = founder.wallet.sign(founderTransaction)
+  blockchainSim.send(signedTransaction)
+  
+  // Return the new sale box to show it keeps the tokens locked
+  signedTransaction.outputs(1)
+}
+
+// we add height to the blockchain to simulate time passing
+addToHeight(1000)
+//we check how much we can withdraw
+println("-----------")
+println("unlocked tokens")
+println((blockchainSim.getHeight - 0) * 798L)
+println("-----------")
+// first withdrawal 79000 from 798000
+lockBox = getTokens(founder1,lockBox, 790000)
+//we add more time
+addToHeight(1000)
+//second withdrawal
+lockBox = getTokens(founder1,lockBox, 790000)
