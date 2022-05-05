@@ -1,0 +1,65 @@
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#__next {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 
+use in conjunction with body and __next attributs
+ref: https://stackoverflow.com/questions/68362273/remove-smooth-scroll-animation-on-changing-page-in-nextjs-with-link-component
+*/
+a:link { 
+  scroll-behavior: auto!important;
+  text-decoration: none!important;
+}
+
+a:hover {
+  text-decoration: underline!important;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.active {
+  opacity: 1;
+}
+
+#walletButton {
+  display: block!important;
+}
+
+.MuiDivider-pages {
+  margin-bottom: 1.5rem!important;
+}
+
+::selection {
+  background: #3ABAB4; /* WebKit/Blink Browsers */
+  color: rgb( 29, 29, 32 );
+}
+::-moz-selection {
+  background: #3ABAB4; /* Gecko Browsers */
+  color: rgb( 29, 29, 32 );
+}
