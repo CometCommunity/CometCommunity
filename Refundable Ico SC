@@ -1,0 +1,47 @@
+{ 
+val receiptTokens = SELF.tokens(0)._2 // Receipt Tokens held in Contract
+val cometTokens = SELF.tokens(1)._2 // Comet Held in Contract
+val receiptId = fromBase58("5HWxQHyjjVFNEWtswcc71922Bq84LsmtMbgEG5eNxAKZ") // Receipt Token Id
+val cometId = fromBase58("s9d3vUc6AhNAPZhxnGXCitQFqdAXN6X7gXT3h9GupWE") // Comet Token Id
+val amountToSwap = 15*(OUTPUTS(0).value - SELF.value)/100000 // Swap Price
+val amountToRefund = 15*(SELF.value - OUTPUTS(0).value)/100000 // Refund Price
+
+// Conditions that are always true
+val alwaysTrue = 
+allOf(Coll(
+OUTPUTS(0).propositionBytes == SELF.propositionBytes, // OUTPUT(0) is contract box
+OUTPUTS(0).R4[Coll[Byte]].get == SELF.id, // Protect against spending two contract boxes of same value in 1 tx.
+OUTPUTS(0).tokens(0)._1 == receiptId)) // Contract always holds receipt tokens
+
+// Conditions that depend on spending action
+val conditionals = if (OUTPUTS(0).value > SELF.value){ // Purchase comet condition
+allOf(Coll(
+OUTPUTS(0).tokens(0)._2 >= receiptTokens - amountToSwap, // Unlock value amount of receipt for spending
+OUTPUTS(0).tokens(1)._1 == cometId,
+OUTPUTS(0).tokens(1)._2 >= cometTokens - amountToSwap)) // Unlock value amount of comet for spending
+
+} else { // Refund comet condition
+allOf(Coll(
+OUTPUTS(0).tokens(0)._2 >= receiptTokens + amountToRefund, // Unlock receipt amount of Erg for spending
+OUTPUTS(0).tokens(1)._1 == cometId,
+OUTPUTS(0).tokens(1)._2 >= cometTokens + amountToRefund)) // Unlock comet amount of Erg for spending
+}
+
+val drainAddressConditions = allOf(Coll(
+OUTPUTS(0).value == SELF.value,
+OUTPUTS(0).tokens(0)._2 == receiptTokens, // Cannot withdraw receipt tokens
+OUTPUTS(0).tokens(1)._1 == cometId, 
+OUTPUTS(0).tokens(1)._2 >= 1)) // Free up all comet
+
+val addFunds = alwaysTrue && allOf(Coll(
+OUTPUTS(0).value >= SELF.value,
+OUTPUTS(0).tokens(0)._2 == receiptTokens, // Cannot withdraw receipt tokens
+OUTPUTS(0).tokens(1)._1 == cometId, 
+OUTPUTS(0).tokens(1)._2 >= SELF.tokens(1)._2,
+OUTPUTS.size == 2)) // Requires setup such that no change Box is made
+
+val drainAddress = sigmaProp(alwaysTrue && drainAddressConditions && PK("9h6Ao31CVSsYisf4pWTM43jv6k3BaXV3jovGfaRj9PrqfYms6Rf"))
+val beforeDeadline = sigmaProp(alwaysTrue && conditionals)
+val afterDeadline = sigmaProp(PK("9h6Ao31CVSsYisf4pWTM43jv6k3BaXV3jovGfaRj9PrqfYms6Rf") && HEIGHT > 1550468)
+sigmaProp( beforeDeadline || afterDeadline || drainAddress || addFunds)
+}
