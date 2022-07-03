@@ -1,4 +1,4 @@
-# 9GAG Clone
+# COMETGAG
 
 * [Task](#task)
 * [About the Project](#about-the-project)
@@ -35,7 +35,7 @@ Users of your $COMETGAG clone should be able to **authenticate**, scroll through
 ### Installation
 1. Clone the repo
 	```
-	git clone https://github.com/your_username_/Project-Name.git
+	git clone 
 	```
 2. Install NPM packages
 	```
@@ -48,9 +48,3 @@ Users of your $COMETGAG clone should be able to **authenticate**, scroll through
 	```
 ## License
 Distributed under the MIT License. See  `LICENSE.txt`  for more information.
-
-## Contact
-
-Nikolay Pleshkov -  [@github](https://github.com/nikolaypleshkov)  -  [@email](mailto:pleshkovn1kk@gmail.com)
-
-Project Link:  [https://github.com/nikolaypleshkov/we-lvlup-9gag](https://github.com/nikolaypleshkov/we-lvlup-9gag)
