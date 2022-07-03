@@ -24,7 +24,7 @@
           </li>
           <li>
             -
-            <a href="https://github.com/koutelier/comet-wallet" target="_blank" class="url"
+            <a href="https://github.com/CometCommunity/CometCommunity/tree/main/Comet-wallet" target="_blank" class="url"
               >All code is open source and available</a
             >
             for public review.
